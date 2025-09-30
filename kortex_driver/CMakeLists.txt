@@ -27,6 +27,10 @@ find_package(hardware_interface REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(kortex_api REQUIRED)
+find_package(kdl_parser REQUIRED)
+find_package(urdf REQUIRED)
+find_package(Eigen3 REQUIRED)
+find_package(eigen3_cmake_module REQUIRED)
 
 #Current: only support Linux x86_64
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
@@ -68,6 +72,10 @@ ament_target_dependencies(
   hardware_interface
   pluginlib
   rclcpp
+  kdl_parser
+  urdf
+  Eigen3
+  eigen3_cmake_module
 )
 
 pluginlib_export_plugin_description_file(hardware_interface hardware_interface_plugin.xml)

@@ -128,6 +128,13 @@ def launch_setup(context, *args, **kwargs):
         parameters=[robot_controllers],
         remappings=[
             ("~/robot_description", "/robot_description"),
+            ("motion_control_handle/target_frame", "target_frame"),
+            ("cartesian_motion_controller/target_frame", "target_frame"),
+            ("cartesian_compliance_controller/target_frame", "target_frame"),
+            ("cartesian_force_controller/target_wrench", "target_wrench"),
+            ("cartesian_compliance_controller/target_wrench", "target_wrench"),
+            ("cartesian_force_controller/ft_sensor_wrench", "/fts_broadcaster/wrench"),
+            ("cartesian_compliance_controller/ft_sensor_wrench", "/fts_broadcaster/wrench"),
         ],
         output="both",
     )
@@ -194,6 +201,30 @@ def launch_setup(context, *args, **kwargs):
         condition=IfCondition(use_internal_bus_gripper_comm),
     )
 
+    motion_control_handle_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["motion_control_handle", "--inactive", "-c", "/controller_manager"],
+    )
+
+    cartesian_motion_controller_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["cartesian_motion_controller", "--inactive", "-c", "/controller_manager"],
+    )
+
+    cartesian_compliance_controller_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["cartesian_compliance_controller", "--inactive", "-c", "/controller_manager"],
+    )
+
+    fts_broadcaster_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["fts_broadcaster", "--param-file", robot_controllers],
+    )
+
     nodes_to_start = [
         control_node,
         robot_state_publisher_node,
@@ -202,6 +233,10 @@ def launch_setup(context, *args, **kwargs):
         robot_traj_controller_spawner,
         robot_pos_controller_spawner,
         fault_controller_spawner,
+        motion_control_handle_spawner,
+        cartesian_motion_controller_spawner,
+        cartesian_compliance_controller_spawner,
+        fts_broadcaster_spawner
     ]
     start_robot_hand_controller = gripper.perform(context) != ""
     # Conditionally add robot_hand_controller_spawner

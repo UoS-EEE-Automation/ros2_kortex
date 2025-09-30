@@ -35,6 +35,7 @@
 
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include <unsupported/Eigen/MatrixFunctions>
 
 namespace
 {
@@ -242,6 +243,8 @@ CallbackReturn KortexMultiInterfaceHardware::on_init(const hardware_interface::H
   arm_positions_.resize(actuator_count_, std::numeric_limits<double>::quiet_NaN());
   arm_velocities_.resize(actuator_count_, std::numeric_limits<double>::quiet_NaN());
   arm_efforts_.resize(actuator_count_, std::numeric_limits<double>::quiet_NaN());
+  ft_effort_measurements_.resize(actuator_count_, std::numeric_limits<double>::quiet_NaN());
+
   arm_commands_positions_.resize(actuator_count_, std::numeric_limits<double>::quiet_NaN());
   arm_commands_velocities_.resize(actuator_count_, std::numeric_limits<double>::quiet_NaN());
   arm_commands_efforts_.resize(actuator_count_, std::numeric_limits<double>::quiet_NaN());
@@ -286,8 +289,45 @@ CallbackReturn KortexMultiInterfaceHardware::on_init(const hardware_interface::H
     RCLCPP_INFO(LOGGER, "Using internal bus communication for gripper!");
   }
 
+  this->createModel();
+
   RCLCPP_INFO(LOGGER, "Hardware Interface successfully configured");
   return CallbackReturn::SUCCESS;
+}
+
+void KortexMultiInterfaceHardware::createModel()
+{
+      KDL::Tree tree;
+    urdf::Model model;
+    urdf_ = this->get_hardware_info().original_xml;
+    if (!model.initString(urdf_))
+    {
+      RCLCPP_INFO(this->get_logger(), "the model failed");
+    }
+    else
+    {
+      RCLCPP_INFO(this->get_logger(), "the model passed");
+    }
+    if (!kdl_parser::treeFromUrdfModel(model, tree))
+    {
+      RCLCPP_INFO(this->get_logger(), "the tree failed");
+    }
+    else
+    {
+      RCLCPP_INFO(this->get_logger(), "the tree passed");
+    }
+    if (!tree.getChain("base_link", "end_effector_link", kinova_chain_))
+    {
+      RCLCPP_INFO(this->get_logger(), "the link failed");
+    }
+    else
+    {
+      RCLCPP_INFO(this->get_logger(), "the link passed");
+    }
+
+    jntToJacSolver_ = new KDL::ChainJntToJacSolver(kinova_chain_);
+    fkSolver_ = new KDL::ChainFkSolverPos_recursive(kinova_chain_);
+    dynSolver_ = new KDL::ChainDynParam(kinova_chain_, KDL::Vector(0, 0, -9.81));
 }
 
 std::vector<hardware_interface::StateInterface>
@@ -325,6 +365,22 @@ KortexMultiInterfaceHardware::export_state_interfaces()
   // state interface which reports if robot is faulted
   state_interfaces.emplace_back(
     hardware_interface::StateInterface("reset_fault", "internal_fault", &in_fault_));
+
+    RCLCPP_DEBUG(LOGGER, "hello");
+
+  for (auto& sensor : info_.sensors) {
+    if (sensor.name == "tcp_fts_sensor") {
+      const std::vector<std::string> fts_names = {
+        "force.x", "force.y", "force.z", "torque.x", "torque.y", "torque.z"
+      };
+      for (uint32_t j = 0; j < 6; ++j) {
+        state_interfaces.emplace_back(
+            hardware_interface::StateInterface(sensor.name, fts_names[j], &ft_effort_measurements_[j]));
+      }
+    }
+  }
+
+ RCLCPP_DEBUG(LOGGER, "goodbye");
 
   return state_interfaces;
 }
@@ -700,6 +756,10 @@ CallbackReturn KortexMultiInterfaceHardware::on_activate(
     {
       arm_efforts_[i] = 0;
     }
+    if (std::isnan(ft_effort_measurements_[i]))
+    {
+      ft_effort_measurements_[i] = 0;
+    }
     if (std::isnan(arm_commands_positions_[i]))
     {
       arm_commands_positions_[i] = KortexMathUtil::wrapRadiansFromMinusPiToPi(
@@ -776,6 +836,8 @@ return_type KortexMultiInterfaceHardware::read(
       KortexMathUtil::toRad(feedback_.actuators(i).position()),
       num_turns_tmp_);  // rad
 
+    
+
     in_fault_ += (feedback_.actuators(i).fault_bank_a() + feedback_.actuators(i).fault_bank_b());
 
     // TODO(livanov93): separate warnings into another variable to expose it via fault controller
@@ -791,6 +853,51 @@ return_type KortexMultiInterfaceHardware::read(
   // add mode that can't be easily reached
   in_fault_ += (feedback_.base().active_state() == k_api::Common::ARMSTATE_SERVOING_READY);
 
+
+  // calc ft
+  KDL::Jacobian J(actuator_count_);
+  KDL::JntArray q_in;
+  q_in.resize(actuator_count_);
+
+  for (uint i = 0; i < actuator_count_; i++)
+  {
+    q_in(i) = arm_positions_[i];
+  }
+
+  jntToJacSolver_->JntToJac(q_in, J);
+
+  Eigen::MatrixXd joint_effort;
+  joint_effort.resize(actuator_count_, 1);
+
+  KDL::JntArray gravity_torques(actuator_count_);
+
+  dynSolver_->JntToGravity(q_in, gravity_torques);
+
+  for (uint i = 0; i < actuator_count_; i++)
+  {
+      joint_effort(i) =arm_efforts_[i]+gravity_torques(i);
+  }
+
+  Eigen::MatrixXd JT = J.data.transpose();
+  Eigen::Matrix<double, 6, 1> estimated_wrench =
+      JT.jacobiSvd(Eigen::ComputeFullU | Eigen::ComputeFullV).solve(joint_effort);
+
+  KDL::Wrench ft(KDL::Vector(estimated_wrench[0], estimated_wrench[1], estimated_wrench[2]),
+                  KDL::Vector(estimated_wrench[3], estimated_wrench[4], estimated_wrench[5]));
+
+  KDL::Frame ee_frame;
+  fkSolver_->JntToCart(q_in, ee_frame);
+
+  // Ignoring tcp for now
+  ft = ee_frame.M.Inverse() * ft;
+
+  for (uint i = 0; i < actuator_count_; i++)
+  {
+    ft_effort_measurements_[i] = ft[i];
+  }
+
+
+  
   return return_type::OK;
 }
 
