@@ -36,6 +36,7 @@
 
     <!-- ros2 control include -->
     <xacro:include filename="$(find kortex_description)/arms/gen3/${dof}dof/urdf/kortex.ros2_control.xacro" />
+     <xacro:include filename="$(find kortex_description)/arms/gen3/${dof}dof/urdf/effort_force_torque_sensor.ros2_control.xacro"/>
     <xacro:kortex_ros2_control
       name="${prefix}KortexMultiInterfaceHardware" prefix="${prefix}"
       use_fake_hardware="${use_fake_hardware}"
@@ -380,4 +381,41 @@
       </joint>
     </xacro:if>
   </xacro:macro>
+
+   <!-- why the loading of this was being weird I don't know  -->
+ 
+  <!-- <xacro:macro name="effort_force_torque_sensor" params="name prefix use_mock_hardware:=^|true mock_sensor_commands:=^|false">
+
+    <!-- here was trying an external sensor before adding into the ros control xacro -->
+    <ros2_control name="${name}" type="sensor">
+      <hardware>
+          <plugin>kinova_effort_ft/EffortForceTorqueSensorHardware</plugin>
+          <param name="example_param_hw_start_duration_sec">0.0</param>
+          <param name="example_param_hw_stop_duration_sec">3.0</param>
+          <param name="example_param_max_sensor_change">5.0</param>
+      </hardware>
+
+      <sensor name="${prefix}tcp_fts_sensor">
+        <state_interface name="force.x"/>
+        <state_interface name="force.y"/>
+        <state_interface name="force.z"/>
+        <state_interface name="torque.x"/>
+        <state_interface name="torque.y"/>
+        <state_interface name="torque.z"/>
+        <param name="frame_id">end_effector_link</param>
+        <param name="fx_range">100</param>
+        <param name="fy_range">100</param>
+        <param name="fz_range">100</param>
+        <param name="tx_range">15</param>
+        <param name="ty_range">15</param>
+        <param name="tz_range">15</param>
+      </sensor>
+    </ros2_control>
+  </xacro:macro>
+
+
+
+  <xacro:external_rrbot_force_torque_sensor
+    name="ExternalRRBotFTSensor" prefix="$(arg prefix)"/> -->
+
 </robot>

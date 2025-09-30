@@ -50,6 +50,15 @@
 #include "TransportClientTcp.h"
 #include "TransportClientUdp.h"
 
+
+#include <kdl/tree.hpp>
+#include <kdl_parser/kdl_parser.hpp>
+#include <kdl/chain.hpp>
+#include <kdl/chainjnttojacsolver.hpp>
+#include <kdl/chainfksolverpos_recursive.hpp>
+#include <kdl/chaindynparam.hpp>
+#include <urdf/model.h>
+
 namespace hardware_interface
 {
 constexpr char HW_IF_TWIST[] = "twist";
@@ -138,6 +147,15 @@ private:
   std::vector<double> arm_positions_;
   std::vector<double> arm_velocities_;
   std::vector<double> arm_efforts_;
+  std::vector<double> ft_effort_measurements_;
+
+  // ft things
+  std::string urdf_;
+  KDL::Chain kinova_chain_;
+  KDL::ChainJntToJacSolver* jntToJacSolver_;
+  KDL::ChainFkSolverPos_recursive* fkSolver_;
+  KDL::ChainDynParam* dynSolver_;
+
 
   // twist command interfaces
   std::vector<double> twist_commands_;
@@ -221,6 +239,7 @@ private:
     k_api::Base::ServoingMode arm_mode, double position, double velocity, double force);
 
   void readGripperPosition();
+  void createModel();
 };
 
 }  // namespace kortex_driver
