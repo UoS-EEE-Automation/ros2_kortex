@@ -252,7 +252,7 @@ CallbackReturn KortexMultiInterfaceHardware::on_init(const hardware_interface::H
   arm_positions_.resize(actuator_count_, std::numeric_limits<double>::quiet_NaN());
   arm_velocities_.resize(actuator_count_, std::numeric_limits<double>::quiet_NaN());
   arm_efforts_.resize(actuator_count_, std::numeric_limits<double>::quiet_NaN());
-  ft_effort_measurements_.resize(actuator_count_, std::numeric_limits<double>::quiet_NaN());
+  ft_effort_measurements_.resize(6, std::numeric_limits<double>::quiet_NaN());
 
   arm_commands_positions_.resize(actuator_count_, std::numeric_limits<double>::quiet_NaN());
   arm_commands_velocities_.resize(actuator_count_, std::numeric_limits<double>::quiet_NaN());
@@ -767,10 +767,6 @@ CallbackReturn KortexMultiInterfaceHardware::on_activate(
     {
       arm_efforts_[i] = 0;
     }
-    if (std::isnan(ft_effort_measurements_[i]))
-    {
-      ft_effort_measurements_[i] = 0;
-    }
     if (std::isnan(arm_commands_positions_[i]))
     {
       arm_commands_positions_[i] = KortexMathUtil::wrapRadiansFromMinusPiToPi(
@@ -785,6 +781,15 @@ CallbackReturn KortexMultiInterfaceHardware::on_activate(
       arm_commands_efforts_[i] = 0;
     }
     arm_joints_control_level_[i] = integration_lvl_t::UNDEFINED;
+  }
+
+  // Initialize force/torque sensor measurements
+  for (std::size_t i = 0; i < 6; i++)
+  {
+    if (std::isnan(ft_effort_measurements_[i]))
+    {
+      ft_effort_measurements_[i] = 0;
+    }
   }
 
   RCLCPP_INFO(LOGGER, "KortexMultiInterfaceHardware successfully activated!");
@@ -902,13 +907,14 @@ return_type KortexMultiInterfaceHardware::read(
   // Ignoring tcp for now
   ft = ee_frame.M.Inverse() * ft;
 
-  for (uint i = 0; i < actuator_count_; i++)
+  // Extract force/torque wrench components (always 6 values regardless of DOF)
+  for (uint i = 0; i < 6; i++)
   {
     ft_effort_measurements_[i] = ft[i];
   }
 
 
-  
+
   return return_type::OK;
 }
 

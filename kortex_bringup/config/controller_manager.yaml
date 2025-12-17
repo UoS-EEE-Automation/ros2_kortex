@@ -39,6 +39,7 @@ joint_trajectory_controller:
       - joint_4
       - joint_5
       - joint_6
+      - joint_7
     command_interfaces:
       - position
     state_interfaces:
@@ -81,6 +82,7 @@ cartesian_motion_controller:
       - joint_4
       - joint_5
       - joint_6
+      - joint_7
 
     # See the cartesian_compliance_controller
     command_interfaces:
@@ -112,6 +114,7 @@ motion_control_handle:
       - joint_4
       - joint_5
       - joint_6
+      - joint_7
 
 fts_broadcaster:
   ros__parameters:
@@ -156,6 +159,7 @@ cartesian_compliance_controller:
       - joint_4
       - joint_5
       - joint_6
+      - joint_7
 
     # Choose between position or velocity.  In fact, the controllers allow to
     # set both at the same time, but not all drivers will support this.

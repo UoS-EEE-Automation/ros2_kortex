@@ -149,6 +149,7 @@
         <param name="ty_range">15</param>
         <param name="tz_range">15</param>
       </sensor>
+      
     </ros2_control>
   </xacro:macro>
 

@@ -267,9 +267,9 @@ def launch_setup(context, *args, **kwargs):
         robot_traj_controller_spawner,
         robot_pos_controller_spawner,
         fault_controller_spawner,
-        motion_control_handle_spawner,
-        cartesian_motion_controller_spawner,
-        cartesian_compliance_controller_spawner,
+        # motion_control_handle_spawner,
+        # cartesian_motion_controller_spawner,
+        # cartesian_compliance_controller_spawner,
         fts_broadcaster_spawner
     ]
     start_robot_hand_controller = gripper.perform(context) != ""
