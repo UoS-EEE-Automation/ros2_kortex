@@ -220,6 +220,8 @@ private:
   // joint prefix
   std::string joints_prefix_;
 
+  std::string fts_joint_name_;
+
   // temp variables to use in update loop
   float cmd_degrees_tmp_;
   float cmd_vel_tmp_;

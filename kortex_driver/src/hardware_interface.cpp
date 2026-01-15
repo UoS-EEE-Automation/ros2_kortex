@@ -75,7 +75,8 @@ KortexMultiInterfaceHardware::KortexMultiInterfaceHardware()
   first_pass_(true),
   gripper_joint_name_(""),
   use_internal_bus_gripper_comm_(false),
-  joints_prefix_("")
+  joints_prefix_(""),
+  fts_joint_name_(""),
 {
   RCLCPP_INFO(LOGGER, "Setting severity threshold to DEBUG");
   auto ret = rcutils_logging_set_logger_level(LOGGER.get_name(), RCUTILS_LOG_SEVERITY_DEBUG);
@@ -185,6 +186,8 @@ CallbackReturn KortexMultiInterfaceHardware::on_init(const hardware_interface::H
   // append prefix to gripper joint name
   gripper_joint_name_ = joints_prefix_ + gripper_joint_name_;
   RCLCPP_INFO(LOGGER, "updated gripper joint name is %s", gripper_joint_name_.c_str());
+
+  fts_joint_name_ = joints_prefix_ + "tcp_fts_sensor";
 
   gripper_command_max_velocity_ = std::stod(info_.hardware_parameters["gripper_max_velocity"]);
   gripper_command_max_force_ = std::stod(info_.hardware_parameters["gripper_max_force"]);
@@ -378,7 +381,7 @@ KortexMultiInterfaceHardware::export_state_interfaces()
     RCLCPP_DEBUG(LOGGER, "hello");
 
   for (auto& sensor : info_.sensors) {
-    if (sensor.name == "tcp_fts_sensor") {
+    if (sensor.name == fts_joint_name_) {
       const std::vector<std::string> fts_names = {
         "force.x", "force.y", "force.z", "torque.x", "torque.y", "torque.z"
       };
