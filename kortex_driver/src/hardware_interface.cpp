@@ -76,7 +76,7 @@ KortexMultiInterfaceHardware::KortexMultiInterfaceHardware()
   gripper_joint_name_(""),
   use_internal_bus_gripper_comm_(false),
   joints_prefix_(""),
-  fts_joint_name_(""),
+  fts_joint_name_("")
 {
   RCLCPP_INFO(LOGGER, "Setting severity threshold to DEBUG");
   auto ret = rcutils_logging_set_logger_level(LOGGER.get_name(), RCUTILS_LOG_SEVERITY_DEBUG);
