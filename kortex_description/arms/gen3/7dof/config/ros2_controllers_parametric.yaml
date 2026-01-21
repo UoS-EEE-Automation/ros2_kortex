@@ -142,6 +142,10 @@ ${prefix}/cartesian_motion_controller:
 ${prefix}/cartesian_compliance_controller:
   ros__parameters:
 
+
+    # Correct only the Z force, X torque, and Y torque, useful for inspection scenarious
+    z_only_force_correction: true
+
     # This is the tip of the robot tool that you usually use for your task.
     # For instance, it could be the drilling bit of a screwdriver or a grinding
     # tool.  When you specify a target_wrench, i.e. some additional forces that
