@@ -17,6 +17,9 @@ ${prefix}/controller_manager:
     fault_controller:
       type: picknik_reset_fault_controller/PicknikResetFaultController
 
+    fts_broadcaster:
+      type: force_torque_sensor_broadcaster/ForceTorqueSensorBroadcaster
+
 ${prefix}/joint_trajectory_controller:
   ros__parameters:
     joints:
@@ -50,8 +53,27 @@ ${prefix}/twist_controller:
       - twist.angular.y
       - twist.angular.z
 
+
 ${prefix}/robotiq_gripper_controller:
   ros__parameters:
     default: true
     joint: ${prefix}robotiq_85_left_knuckle_joint
     allow_stalling: true
+
+
+${prefix}/fts_broadcaster:
+  ros__parameters:
+    sensor_name: ${prefix}tcp_fts_sensor
+    frame_id: ${prefix}end_effector_link
+    sensor_filter_chain:
+      filter1:
+        name: median_filter
+        type: filters/MedianFilterWrench
+        params:
+          number_of_observations: 100
+      filter2:
+        name: mean_filter
+        type: filters/MeanFilterWrench
+        params:
+          number_of_observations: 1000
+ 

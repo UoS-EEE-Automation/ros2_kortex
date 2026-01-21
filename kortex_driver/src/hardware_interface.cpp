@@ -328,7 +328,7 @@ void KortexMultiInterfaceHardware::createModel()
     {
       RCLCPP_INFO(LOGGER, "the tree passed");
     }
-    if (!tree.getChain("base_link", "end_effector_link", kinova_chain_))
+    if (!tree.getChain("kinova_base_link", "kinova_end_effector_link", kinova_chain_))
     {
       RCLCPP_INFO(LOGGER, "the link failed");
     }
@@ -913,6 +913,8 @@ return_type KortexMultiInterfaceHardware::read(
   // Extract force/torque wrench components (always 6 values regardless of DOF)
   for (uint i = 0; i < 6; i++)
   {
+    // RCLCPP_DEBUG(LOGGER, "ft_effort %d: %.2f",i, ft[i]);
+
     ft_effort_measurements_[i] = ft[i];
   }
 
