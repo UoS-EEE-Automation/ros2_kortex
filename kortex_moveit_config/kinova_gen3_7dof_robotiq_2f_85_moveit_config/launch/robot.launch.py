@@ -26,7 +26,15 @@ from launch.conditions import IfCondition, UnlessCondition
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
 from moveit_configs_utils import MoveItConfigsBuilder
+from ament_index_python.packages import get_package_share_directory
+import yaml
+import os
 
+def load_yaml(package_name, file_path):
+    package_path = get_package_share_directory(package_name)
+    full_path = os.path.join(package_path, file_path)
+    with open(full_path, 'r') as f:
+        return yaml.safe_load(f)
 
 def launch_setup(context, *args, **kwargs):
     # Initialize Arguments
@@ -62,12 +70,22 @@ def launch_setup(context, *args, **kwargs):
 
     moveit_config.moveit_cpp.update({"use_sim_time": use_sim_time.perform(context) == "true"})
 
+    octomap_config = {
+        'octomap_frame': 'world',  # if mobile robot, should be a fixed frame in the world
+        'octomap_resolution': 0.05,
+        'max_range': 5.0
+    }
+
+    octomap_updater_config = load_yaml('kinova_gen3_7dof_robotiq_2f_85_moveit_config', 'config/sensors_3d.yaml')
+
     move_group_node = Node(
         package="moveit_ros_move_group",
         executable="move_group",
         output="screen",
         parameters=[
             moveit_config.to_dict(),
+            octomap_config,
+            octomap_updater_config,
         ],
     )
 
