@@ -106,7 +106,9 @@ ${prefix}/motion_control_handle:
 
 ${prefix}/cartesian_motion_controller:
   ros__parameters:
-
+    #ik:solver: "damped_least_squares_redundant"
+    #ik_solver: "damped_least_squares"
+    #ik_solver: "selectively_damped_least_squares"
     # See the cartesian_compliance_controller
     end_effector_link: "ut_probe_contact_frame"
     robot_base_link: "${prefix}base_link"
@@ -122,17 +124,24 @@ ${prefix}/cartesian_motion_controller:
     # See the cartesian_compliance_controller
     command_interfaces:
       - position
-        #- velocity
+      # - velocity
 
     solver:
-        error_scale: 1.0
-        iterations: 10
-        publish_state_feedback: True
+      damped_least_squares_redundant:
+        alpha: 0.1
+        alpha_centering: 0.1
+      error_scale: 1.0
+      iterations: 10
+      publish_state_feedback: True
+
+      # damped_least_squares:
+      #   alpha: 0.5
+
 
     pd_gains:
-        trans_x: {p: 1.0}
-        trans_y: {p: 1.0}
-        trans_z: {p: 1.0}
+        trans_x: {p: 2.0}
+        trans_y: {p: 2.0}
+        trans_z: {p: 2.0}
         rot_x: {p: 0.5}
         rot_y: {p: 0.5}
         rot_z: {p: 0.5}
@@ -198,7 +207,7 @@ ${prefix}/cartesian_compliance_controller:
     # and decide for what works best.
     command_interfaces:
       - position
-        #- velocity
+      #- velocity
 
     stiffness:  # w.r.t. compliance_ref_link coordinates
         trans_x: 500.0

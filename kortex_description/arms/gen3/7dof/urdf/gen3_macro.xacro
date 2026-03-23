@@ -211,8 +211,8 @@
         <axis
           xyz="0 0 1" />
         <limit
-          lower="${PI-0.01}"
-          upper="${PI+0.01}"
+          lower="${-2*PI}"
+          upper="${2*PI}"
           effort="39"
           velocity="1.3963" />
       </joint>

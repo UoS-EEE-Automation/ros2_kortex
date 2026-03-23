@@ -437,17 +437,17 @@ KortexMultiInterfaceHardware::export_command_interfaces()
 
   // register twist command interfaces
   command_interfaces.emplace_back(
-    hardware_interface::CommandInterface("tcp", "twist.linear.x", &twist_commands_[0]));
+    hardware_interface::CommandInterface("kinova_tcp", "twist.linear.x", &twist_commands_[0]));
   command_interfaces.emplace_back(
-    hardware_interface::CommandInterface("tcp", "twist.linear.y", &twist_commands_[1]));
+    hardware_interface::CommandInterface("kinova_tcp", "twist.linear.y", &twist_commands_[1]));
   command_interfaces.emplace_back(
-    hardware_interface::CommandInterface("tcp", "twist.linear.z", &twist_commands_[2]));
+    hardware_interface::CommandInterface("kinova_tcp", "twist.linear.z", &twist_commands_[2]));
   command_interfaces.emplace_back(
-    hardware_interface::CommandInterface("tcp", "twist.angular.x", &twist_commands_[3]));
+    hardware_interface::CommandInterface("kinova_tcp", "twist.angular.x", &twist_commands_[3]));
   command_interfaces.emplace_back(
-    hardware_interface::CommandInterface("tcp", "twist.angular.y", &twist_commands_[4]));
+    hardware_interface::CommandInterface("kinova_tcp", "twist.angular.y", &twist_commands_[4]));
   command_interfaces.emplace_back(
-    hardware_interface::CommandInterface("tcp", "twist.angular.z", &twist_commands_[5]));
+    hardware_interface::CommandInterface("kinova_tcp", "twist.angular.z", &twist_commands_[5]));
 
   command_interfaces.emplace_back(
     hardware_interface::CommandInterface("reset_fault", "command", &reset_fault_cmd_));
@@ -516,9 +516,9 @@ return_type KortexMultiInterfaceHardware::prepare_command_mode_switch(
       }
     }
     if (
-      (key == "tcp/twist.linear.x") || (key == "tcp/twist.linear.y") ||
-      (key == "tcp/twist.linear.z") || (key == "tcp/twist.angular.x") ||
-      (key == "tcp/twist.angular.y") || (key == "tcp/twist.angular.z"))
+      (key == "kinova_tcp/twist.linear.x") || (key == "kinova_tcp/twist.linear.y") ||
+      (key == "kinova_tcp/twist.linear.z") || (key == "kinova_tcp/twist.angular.x") ||
+      (key == "kinova_tcp/twist.angular.y") || (key == "kinova_tcp/twist.angular.z"))
     {
       stop_modes_.emplace_back(StopStartInterface::STOP_TWIST);
     }
@@ -565,9 +565,9 @@ return_type KortexMultiInterfaceHardware::prepare_command_mode_switch(
       }
     }
     if (
-      (key == "tcp/twist.linear.x") || (key == "tcp/twist.linear.y") ||
-      (key == "tcp/twist.linear.z") || (key == "tcp/twist.angular.x") ||
-      (key == "tcp/twist.angular.y") || (key == "tcp/twist.angular.z"))
+      (key == "kinova_tcp/twist.linear.x") || (key == "kinova_tcp/twist.linear.y") ||
+      (key == "kinova_tcp/twist.linear.z") || (key == "kinova_tcp/twist.angular.x") ||
+      (key == "kinova_tcp/twist.angular.y") || (key == "kinova_tcp/twist.angular.z"))
     {
       start_modes_.emplace_back(StopStartInterface::START_TWIST);
     }
@@ -996,7 +996,7 @@ return_type KortexMultiInterfaceHardware::write(
       else
       {
         // Keep alive mode - no controller active
-        RCLCPP_DEBUG(LOGGER, "No controller active in SINGLE_LEVEL_SERVOING mode!");
+        //RCLCPP_DEBUG(LOGGER, "No controller active in SINGLE_LEVEL_SERVOING mode!");
       }
 
       // gripper control
@@ -1024,7 +1024,7 @@ return_type KortexMultiInterfaceHardware::write(
       {
         // Keep alive mode - no controller active
         feedback_ = base_cyclic_.RefreshFeedback();
-        RCLCPP_DEBUG(LOGGER, "No controller active in LOW_LEVEL_SERVOING mode !");
+        //RCLCPP_DEBUG(LOGGER, "No controller active in LOW_LEVEL_SERVOING mode !");
       }
     }
     else
@@ -1051,6 +1051,7 @@ void KortexMultiInterfaceHardware::prepareCommands()
 {  // update the command for each joint
   for (size_t i = 0; i < actuator_count_; i++)
   {
+
     // set command per joint
     cmd_degrees_tmp_ = static_cast<float>(
       KortexMathUtil::wrapDegreesFromZeroTo360(KortexMathUtil::toDeg(arm_commands_positions_[i])));
@@ -1058,6 +1059,8 @@ void KortexMultiInterfaceHardware::prepareCommands()
 
     base_command_.mutable_actuators(static_cast<int>(i))->set_position(cmd_degrees_tmp_);
     // Velocity command interface not implemented properly in the kortex api
+    //RCLCPP_INFO(LOGGER, "velocity %d: %.1f", i, cmd_vel_tmp_);
+
     // base_command_.mutable_actuators(i)->set_velocity(cmd_vel_tmp_);
     base_command_.mutable_actuators(static_cast<int>(i))->set_command_id(base_command_.frame_id());
   }
