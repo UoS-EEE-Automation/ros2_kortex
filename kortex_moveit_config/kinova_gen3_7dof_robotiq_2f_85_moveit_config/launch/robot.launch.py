@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import os
-
+import yaml
 from launch import LaunchDescription
 from launch.substitutions import LaunchConfiguration
 from launch.actions import (
@@ -21,12 +21,24 @@ from launch.actions import (
     OpaqueFunction,
     RegisterEventHandler,
 )
+from launch_ros.actions import ComposableNodeContainer
+from launch_ros.descriptions import ComposableNode
 from launch.event_handlers import OnProcessExit
 from launch.conditions import IfCondition, UnlessCondition
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
 from moveit_configs_utils import MoveItConfigsBuilder
 
+
+def load_yaml(package_name, file_path):
+    package_path = get_package_share_directory(package_name)
+    absolute_file_path = os.path.join(package_path, file_path)
+
+    try:
+        with open(absolute_file_path, "r") as file:
+            return yaml.safe_load(file)
+    except EnvironmentError:  # parent of IOError, OSError *and* WindowsError where available
+        return None
 
 def launch_setup(context, *args, **kwargs):
     # Initialize Arguments
@@ -62,32 +74,16 @@ def launch_setup(context, *args, **kwargs):
 
     moveit_config.moveit_cpp.update({"use_sim_time": use_sim_time.perform(context) == "true"})
 
+
+    servo_yaml = load_yaml("kinova_gen3_7dof_robotiq_2f_85_moveit_config", "config/servo.yaml")
+    servo_params = {"moveit_servo": servo_yaml}
+    # print(servo_params)
     move_group_node = Node(
         package="moveit_ros_move_group",
         executable="move_group",
         output="screen",
         parameters=[
             moveit_config.to_dict(),
-        ],
-    )
-
-    # Static TF
-    static_tf = Node(
-        package="tf2_ros",
-        executable="static_transform_publisher",
-        name="static_transform_publisher",
-        output="log",
-        arguments=["--frame-id", "world", "--child-frame-id", "base_link"],
-    )
-
-    # Publish TF
-    robot_state_publisher = Node(
-        package="robot_state_publisher",
-        executable="robot_state_publisher",
-        name="robot_state_publisher",
-        output="both",
-        parameters=[
-            moveit_config.robot_description,
         ],
     )
 
@@ -172,17 +168,71 @@ def launch_setup(context, *args, **kwargs):
         condition=IfCondition(launch_rviz),
     )
 
+
+    container = ComposableNodeContainer(
+        name="moveit_servo_demo_container",
+        namespace="/",
+        package="rclcpp_components",
+        executable="component_container_mt",
+        composable_node_descriptions=[
+            # Example of launching Servo as a node component
+            # Assuming ROS2 intraprocess communications works well, this is a more efficient way.
+            ComposableNode(
+                package="moveit_servo",
+                plugin="moveit_servo::ServoNode",
+                name="servo_node",
+                parameters=[
+                    servo_params,
+                    moveit_config.robot_description,
+                    moveit_config.robot_description_semantic,
+                ],
+                extra_arguments=[{'use_intra_process_comms': True}],
+            ),
+                # Static TF
+            ComposableNode(
+                package="tf2_ros",
+                plugin="tf2_ros::StaticTransformBroadcasterNode",
+                name="static_transform_publisher",
+                parameters=[{"frame-id": "world", "child-frame-id": "base_link"}],
+                extra_arguments=[{'use_intra_process_comms': True}],
+            ),
+
+            # Publish TF
+            ComposableNode(
+                package="robot_state_publisher",
+                plugin="robot_state_publisher::RobotStatePublisher",
+                name="robot_state_publisher",
+                parameters=[
+                    moveit_config.robot_description,
+                ],
+                extra_arguments=[{'use_intra_process_comms': False}],
+            ),
+            ComposableNode(
+                package="moveit_servo",
+                plugin="moveit_servo::JoyToServoPub",
+                name="controller_to_servo_node",
+                extra_arguments=[{'use_intra_process_comms': True}],
+            ),
+            ComposableNode(
+                package="joy",
+                plugin="joy::Joy",
+                name="joy_node",
+                extra_arguments=[{'use_intra_process_comms': True}],
+            ),
+        ],
+        output="screen",
+    )
+
     nodes_to_start = [
         ros2_control_node,
-        robot_state_publisher,
         joint_state_broadcaster_spawner,
         delay_rviz_after_joint_state_broadcaster_spawner,
         robot_traj_controller_spawner,
         robot_pos_controller_spawner,
         robot_hand_controller_spawner,
         fault_controller_spawner,
-        move_group_node,
-        static_tf,
+        container,
+        move_group_node
     ]
 
     return nodes_to_start
