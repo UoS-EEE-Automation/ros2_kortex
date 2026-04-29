@@ -434,19 +434,20 @@ KortexMultiInterfaceHardware::export_command_interfaces()
     }
   }
 
+
   // register twist command interfaces
   command_interfaces.emplace_back(
-    hardware_interface::CommandInterface("tcp", "twist.linear.x", &twist_commands_[0]));
+    hardware_interface::CommandInterface(joints_prefix_ + "tcp", "twist.linear.x", &twist_commands_[0]));
   command_interfaces.emplace_back(
-    hardware_interface::CommandInterface("tcp", "twist.linear.y", &twist_commands_[1]));
+    hardware_interface::CommandInterface(joints_prefix_ + "tcp", "twist.linear.y", &twist_commands_[1]));
   command_interfaces.emplace_back(
-    hardware_interface::CommandInterface("tcp", "twist.linear.z", &twist_commands_[2]));
+    hardware_interface::CommandInterface(joints_prefix_ + "tcp", "twist.linear.z", &twist_commands_[2]));
   command_interfaces.emplace_back(
-    hardware_interface::CommandInterface("tcp", "twist.angular.x", &twist_commands_[3]));
+    hardware_interface::CommandInterface(joints_prefix_ + "tcp", "twist.angular.x", &twist_commands_[3]));
   command_interfaces.emplace_back(
-    hardware_interface::CommandInterface("tcp", "twist.angular.y", &twist_commands_[4]));
+    hardware_interface::CommandInterface(joints_prefix_ + "tcp", "twist.angular.y", &twist_commands_[4]));
   command_interfaces.emplace_back(
-    hardware_interface::CommandInterface("tcp", "twist.angular.z", &twist_commands_[5]));
+    hardware_interface::CommandInterface(joints_prefix_ + "tcp", "twist.angular.z", &twist_commands_[5]));
 
   command_interfaces.emplace_back(
     hardware_interface::CommandInterface("reset_fault", "command", &reset_fault_cmd_));
@@ -515,9 +516,9 @@ return_type KortexMultiInterfaceHardware::prepare_command_mode_switch(
       }
     }
     if (
-      (key == "tcp/twist.linear.x") || (key == "tcp/twist.linear.y") ||
-      (key == "tcp/twist.linear.z") || (key == "tcp/twist.angular.x") ||
-      (key == "tcp/twist.angular.y") || (key == "tcp/twist.angular.z"))
+      (key == joints_prefix_ +  "tcp/twist.linear.x") || (key == joints_prefix_ +  "tcp/twist.linear.y") ||
+      (key == joints_prefix_ +  "tcp/twist.linear.z") || (key == joints_prefix_ +  "tcp/twist.angular.x") ||
+      (key == joints_prefix_ +  "tcp/twist.angular.y") || (key == joints_prefix_ +  "tcp/twist.angular.z"))
     {
       stop_modes_.emplace_back(StopStartInterface::STOP_TWIST);
     }
@@ -564,9 +565,9 @@ return_type KortexMultiInterfaceHardware::prepare_command_mode_switch(
       }
     }
     if (
-      (key == "tcp/twist.linear.x") || (key == "tcp/twist.linear.y") ||
-      (key == "tcp/twist.linear.z") || (key == "tcp/twist.angular.x") ||
-      (key == "tcp/twist.angular.y") || (key == "tcp/twist.angular.z"))
+      (key == joints_prefix_ + "tcp/twist.linear.x") || (key == joints_prefix_ +  "tcp/twist.linear.y") ||
+      (key == joints_prefix_ +  "tcp/twist.linear.z") || (key == joints_prefix_ +  "tcp/twist.angular.x") ||
+      (key == joints_prefix_ +  "tcp/twist.angular.y") || (key == joints_prefix_ +  "tcp/twist.angular.z"))
     {
       start_modes_.emplace_back(StopStartInterface::START_TWIST);
     }
