@@ -26,6 +26,9 @@ ${prefix}/controller_manager:
     cartesian_compliance_controller:
       type: cartesian_compliance_controller/CartesianComplianceController
 
+    pan_tilt_controller:
+      type: forward_command_controller/ForwardCommandController
+
     fts_broadcaster:
       type: force_torque_sensor_broadcaster/ForceTorqueSensorBroadcaster
 
@@ -221,3 +224,17 @@ ${prefix}/cartesian_compliance_controller:
         rot_x: {p: 1.5}
         rot_y: {p: 1.5}
         rot_z: {p: 1.5}
+
+${prefix}/pan_tilt_controller:
+  ros__parameters:
+    joints:
+      - ${prefix}joint_1
+      - ${prefix}joint_2
+      - ${prefix}joint_3
+      - ${prefix}joint_4
+      - ${prefix}joint_5
+      - ${prefix}joint_6
+      - ${prefix}joint_7
+    interface_name: position
+    # command_interfaces:
+    #   - position
